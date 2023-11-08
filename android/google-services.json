@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "229700298777",
+    "project_id": "datasecurity-5095b",
+    "storage_bucket": "datasecurity-5095b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:229700298777:android:ace758256f1c4ead0ea288",
+        "android_client_info": {
+          "package_name": "com.example.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgfLL3Yi9vl-PAUTBrIeTHbGR9DbG60Dg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
