@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -35,16 +34,16 @@ internal fun BoxWithConstraintsScope.cryptoContent(
             cryptoViewModel.selectedOption.value,
             cryptoViewModel::changeSelectedOption,
             cryptoViewModel::changeAlgorithm
-            )
+        )
 
         OutlinedTextField(
             modifier = Modifier
                 .width((maxWidth / 100 * 70))
                 .heightIn(max = 90.dp),
-            value = cryptoViewModel.keyText.value,
+            value = cryptoViewModel.keyText.value!!,
             onValueChange = cryptoViewModel::changeKeyText,
             placeholder = { Text(text = "Key") },
-            enabled = cryptoViewModel.selectedOption.value > 0,
+            enabled = cryptoViewModel.selectedOption.value > -1,
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Key,

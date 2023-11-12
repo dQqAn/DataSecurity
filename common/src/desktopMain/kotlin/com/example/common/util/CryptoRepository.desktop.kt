@@ -1,5 +1,5 @@
 package com.example.common.util
 
-actual class CryptoRepository: CryptoInterface {
+actual class CryptoRepository : CryptoInterface {
 
 }

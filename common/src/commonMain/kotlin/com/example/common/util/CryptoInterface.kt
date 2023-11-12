@@ -6,9 +6,9 @@ import java.io.File
 
 interface CryptoInterface {
     @Composable
-    fun uploadButton(algorithm : MutableState<String?>, key : MutableState<String>)
+    fun uploadButton(algorithm: MutableState<String?>, key: MutableState<String?>)
 
-    fun uploadFile(algorithm : MutableState<String?>, key : MutableState<String>)
+    fun uploadFile(algorithm: MutableState<String?>, key: MutableState<String?>)
 
     var selectedFile: File?
 

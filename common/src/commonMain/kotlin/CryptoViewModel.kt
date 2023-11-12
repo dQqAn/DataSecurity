@@ -7,7 +7,7 @@ import com.example.common.util.ViewModel
 class CryptoViewModel(
     private val repository: CryptoInterface,
 ) : ViewModel() {
-    private var _keyText = mutableStateOf("")
+    private var _keyText: MutableState<String?> = mutableStateOf("")
     internal val keyText = _keyText
     internal fun changeKeyText(key: String) {
         _keyText.value = key
@@ -18,9 +18,9 @@ class CryptoViewModel(
         selectedOption.value = option
     }
 
-    private val algorithm : MutableState<String?> = mutableStateOf(null)
-    internal fun changeAlgorithm(method:String?){
-        algorithm.value=method
+    private val algorithm: MutableState<String?> = mutableStateOf(null)
+    internal fun changeAlgorithm(method: String?) {
+        algorithm.value = method
     }
 
     @Composable
