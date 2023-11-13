@@ -13,12 +13,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.FileProvider
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
+import java.security.MessageDigest
+import java.text.SimpleDateFormat
+import java.util.*
+import javax.crypto.Cipher
+import javax.crypto.CipherOutputStream
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.DESKeySpec
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -88,13 +100,83 @@ actual class CryptoRepository(
     }
 
     override fun uploadFile(algorithm: MutableState<String?>, key: MutableState<String?>) {
-        fileUri?.let {
+        fileUri?.let { it ->
             if (!algorithm.value.isNullOrEmpty() && !key.value.isNullOrEmpty()) {
-                setFileLocation("Encrypted Files", it)
+
+                //DES
+                /*var charac = key.value!!.toByteArray(Charsets.UTF_8)
+                        val md = MessageDigest.getInstance("SHA-1")
+                        charac = md.digest(charac)
+                        charac = charac.copyOf(16)
+                        val factory = SecretKeyFactory.getInstance("DES")
+                        val keygen = factory.generateSecret(DESKeySpec(charac))*/
+                //aes
+//                val skeySpec = SecretKeySpec(key.value!!.substring(0, 32).toByteArray(), "AES")
+//                val ivSpec = IvParameterSpec(IV.substring(0, 16).getBytes())
+
+                //aes
+                /*val salt: ByteArray = random.generateSeed(128 / 8)
+                val keySpec = PBEKeySpec(key.value!!.toCharArray(), salt, 872791, 128)
+                val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512", "BC")
+                val passwordKey = secretKeyFactory.generateSecret(keySpec)
+                cipher.init(Cipher.ENCRYPT_MODE, passwordKey, PBEParameterSpec(salt, 872791)) */
+
+                //blowfish
+                //min 4 bytes (32 bits), max56 bytes (448 bits)
+//                val keygen = SecretKeySpec(key.value!!.toByteArray(), algorithm.value)
+
+                val cipher = Cipher.getInstance(algorithm.value)
+                val keygen = keyGen(algorithm.value!!, key.value!!)
+
+                cipher.init(Cipher.ENCRYPT_MODE, keygen, IvParameterSpec(ByteArray(cipher.blockSize)))
+
+                val input = context.contentResolver.openInputStream(it)
+
+                val tempFile = File(
+                    context.getOutputDirectory(), SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
+                        .format(System.currentTimeMillis()) + ".jpeg"
+                )
+                /*val tempFile = File.createTempFile(
+                    SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).toString(), ".jpeg",
+                    context.getOutputDirectory()
+                )*/
+
+                val out: OutputStream = FileOutputStream(tempFile)
+
+                CipherOutputStream(out, cipher).use {
+                    input?.copyTo(it)
+                    it.close()
+                }
+                out.close()
+                input?.close()
+
+                val encryptedUri =
+                    FileProvider.getUriForFile(context, context.packageName + ".provider", tempFile)
+                setFileLocation("Encrypted Files", encryptedUri)
             } else {
                 setFileLocation("Unencrypted Files", it)
             }
         }
+    }
+
+    private fun keyGen(algorithm: String, key: String): SecretKeySpec {
+//        val digest=MessageDigest.getInstance("SHA-256") //32 byte
+//        val digest=MessageDigest.getInstance("SHA-1") //20 byte
+        val digest = MessageDigest.getInstance("MD5") //16 byte
+
+        var bytes = key.toByteArray(Charsets.UTF_8)
+        val lastKey: ByteArray
+        if (algorithm == "AES" || algorithm == "BLOWFISH") {
+            digest.update(bytes, 0, bytes.size)
+            lastKey = digest.digest()
+        } else {
+            bytes = digest.digest(bytes)
+            bytes = bytes.copyOf(16)
+            val factory = SecretKeyFactory.getInstance("DES")
+            lastKey = factory.generateSecret(DESKeySpec(bytes)).encoded
+        }
+
+        return SecretKeySpec(lastKey, algorithm)
     }
 
     private fun setFileLocation(path: String, uri: Uri) {
@@ -117,5 +199,13 @@ actual class CryptoRepository(
         fileName = cursor?.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
         cursor?.close()
         return fileName
+    }
+
+    private fun Context.getOutputDirectory(): File {
+        val mediaDir = this.externalMediaDirs.firstOrNull()?.let {
+            File(it, "demo").apply { mkdirs() }
+        }
+        return if (mediaDir != null && mediaDir.exists())
+            mediaDir else this.filesDir
     }
 }
