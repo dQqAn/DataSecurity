@@ -16,6 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import com.example.common.util.Dependencies
 import com.example.common.util.LocalNotification
 import com.example.common.view.cryptoContent
+import com.example.common.view.driveContent
 import com.example.common.view.signInContent
 import com.example.common.view.signUpContent
 
@@ -76,7 +77,10 @@ fun BoxWithConstraintsScope.contentProvider(
             }
 
             is DrivePage -> {
-
+                driveContent(
+                    cryptoViewModel = cryptoViewModel,
+                    onBackClick = { navigationStack.back() }
+                )
             }
         }
     }
