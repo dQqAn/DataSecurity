@@ -19,6 +19,8 @@ internal fun BoxWithConstraintsScope.driveContent(
     cryptoViewModel: CryptoViewModel,
     onBackClick: () -> Unit
 ) {
+    cryptoViewModel.encryptedList()
+    cryptoViewModel.unencryptedList()
     Box(
         modifier = Modifier.fillMaxSize().padding(PaddingValues(20.dp))
     ) {
@@ -37,47 +39,43 @@ internal fun BoxWithConstraintsScope.driveContent(
                 stickyHeader {
                     Text("Encrypted Files")
                 }
-                val items = listOf<String>("A", "B", "C")
-                itemsIndexed(items) { index, item ->
+                itemsIndexed(cryptoViewModel.encryptedList.value) { index, item ->
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth().clickable(true) {
-                            println(index)
+                            cryptoViewModel.downloadFile("Encrypted Files", item!!)
                         }
                     ) {
-                        Text(
-                            modifier = Modifier,
-                            text = item
-                        )
+                        item?.let {
+                            Text(
+                                modifier = Modifier,
+                                text = it
+                            )
+                        }
                     }
                 }
 
                 stickyHeader {
                     Text("Unencrypted Files")
                 }
-                val items2 = listOf<String>("1", "2", "3")
-                itemsIndexed(items2) { index, item ->
+                itemsIndexed(cryptoViewModel.unencryptedList.value) { index, item ->
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth().clickable(true) {
-                            println(index)
+                            cryptoViewModel.downloadFile("Unencrypted Files", item!!)
                         }
                     ) {
-                        Text(
-                            modifier = Modifier,
-                            text = item
-                        )
+                        item?.let {
+                            Text(
+                                modifier = Modifier,
+                                text = it
+                            )
+                        }
                     }
                 }
             }
-
-            Button(
-                onClick = {
-
-                }
-            ) { Text("Download") }
 
             Button(
                 onClick = { onBackClick() }

@@ -26,4 +26,11 @@ class CryptoViewModel(
     @Composable
     internal fun uploadButton() = repository.uploadButton(algorithm, keyText)
 
+    val encryptedList: MutableState<List<String?>> = mutableStateOf(listOf(null))
+    fun encryptedList() = repository.encryptedList(encryptedList)
+
+    val unencryptedList: MutableState<List<String?>> = mutableStateOf(listOf(null))
+    fun unencryptedList() = repository.unencryptedList(unencryptedList)
+
+    fun downloadFile(category: String, fileName: String) = repository.downloadFile(category, fileName)
 }

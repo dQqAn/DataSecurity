@@ -13,4 +13,9 @@ interface CryptoInterface {
     var selectedFile: File?
 
     val isOpenFileManager: MutableState<Boolean>
+
+    fun encryptedList(list: MutableState<List<String?>>)
+    fun unencryptedList(list: MutableState<List<String?>>)
+
+    fun downloadFile(category: String, fileName: String)
 }

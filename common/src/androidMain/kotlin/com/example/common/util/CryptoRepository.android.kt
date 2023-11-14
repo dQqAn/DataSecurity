@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -80,6 +81,47 @@ actual class CryptoRepository(
     private var fileUri: Uri? = null
 
     override val isOpenFileManager: MutableState<Boolean> = mutableStateOf(false)
+
+    override fun encryptedList(list: MutableState<List<String?>>) {
+        val listRef = storage.reference.child("Encrypted Files/${auth.uid}")
+        listRef.listAll()
+            .addOnSuccessListener {
+                list.value = it.items.map { storageReference ->
+                    storageReference.name
+                }
+            }
+            .addOnFailureListener {
+                println(it.localizedMessage)
+            }
+    }
+
+    override fun unencryptedList(list: MutableState<List<String?>>) {
+        val listRef = storage.reference.child("Unencrypted Files/${auth.uid}")
+        listRef.listAll()
+            .addOnSuccessListener {
+                list.value = it.items.map { storageReference ->
+                    storageReference.name
+                }
+            }
+            .addOnFailureListener {
+                println(it.localizedMessage)
+            }
+    }
+
+    override fun downloadFile(category: String, fileName: String) {
+        val pathReference = storage.reference.child("${category}/${auth.uid}/${fileName}")
+        val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", category)
+        if (!rootPath.exists()) {
+            rootPath.mkdirs();
+        }
+        val localFile = File(rootPath, "${fileName}.jpeg")
+        pathReference.getFile(localFile)
+            .addOnSuccessListener {
+                println(it.storage.toString())
+            }.addOnFailureListener {
+                println(it.localizedMessage)
+            }
+    }
 
     @Composable
     private fun launchFileManager(algorithm: MutableState<String?>, key: MutableState<String?>) =
