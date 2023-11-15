@@ -18,4 +18,6 @@ interface CryptoInterface {
     fun unencryptedList(list: MutableState<List<String?>>)
 
     fun downloadFile(category: String, fileName: String)
+
+    fun decrypt(algorithm: String, file: File, key: String)
 }

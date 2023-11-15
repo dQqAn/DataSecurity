@@ -4,10 +4,12 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.firebase.auth.FirebaseAuth
@@ -27,6 +30,7 @@ import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.crypto.Cipher
+import javax.crypto.CipherInputStream
 import javax.crypto.CipherOutputStream
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.DESKeySpec
@@ -108,19 +112,57 @@ actual class CryptoRepository(
             }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun downloadFile(category: String, fileName: String) {
         val pathReference = storage.reference.child("${category}/${auth.uid}/${fileName}")
         val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", category)
         if (!rootPath.exists()) {
-            rootPath.mkdirs();
+            rootPath.mkdirs()
         }
-        val localFile = File(rootPath, "${fileName}.jpeg")
+        val localFile = File(rootPath, fileName)
         pathReference.getFile(localFile)
             .addOnSuccessListener {
-                println(it.storage.toString())
+                decrypt("AES", localFile, "asd")
             }.addOnFailureListener {
                 println(it.localizedMessage)
             }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun decrypt(algorithm: String, file: File, key: String) {
+        val cipher = Cipher.getInstance(algorithm)
+        val keygen = keyGen(algorithm, key)
+
+        cipher.init(Cipher.DECRYPT_MODE, keygen, IvParameterSpec(ByteArray(cipher.blockSize)))
+
+        val inputStream = context.contentResolver.openInputStream(file.toUri())
+
+        //second way, https://gist.github.com/gsandaru/b758abe3ebd6b24e599db43c2cbce1f1
+//        val inputStream: FileInputStream = FileInputStream(file)
+//        val inputBytes = ByteArray(file.length().toInt())
+//        inputStream.read(inputBytes)
+//        val outputBytes = cipher.doFinal(inputBytes)
+
+        val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Unencrypted Files")
+        if (!rootPath.exists()) {
+            rootPath.mkdirs()
+        }
+        val localFile = File(rootPath, file.name)
+        val output = FileOutputStream(localFile)
+
+//        output.write(outputBytes)
+
+        CipherInputStream(inputStream, cipher).use {
+            try {
+                it.copyTo(output)
+                println("File decrypted.")
+            } catch (e: Exception) {
+                println(e.localizedMessage)
+            }
+            it.close()
+        }
+        output.close()
+        inputStream?.close()
     }
 
     @Composable
