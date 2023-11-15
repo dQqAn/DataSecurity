@@ -87,7 +87,7 @@ actual class CryptoRepository(
     override val isOpenFileManager: MutableState<Boolean> = mutableStateOf(false)
 
     override fun encryptedList(list: MutableState<List<String?>>) {
-        val listRef = storage.reference.child("Encrypted Files/${auth.uid}")
+        val listRef = storage.reference.child("${auth.uid}/Encrypted Files")
         listRef.listAll()
             .addOnSuccessListener {
                 list.value = it.items.map { storageReference ->
@@ -100,7 +100,7 @@ actual class CryptoRepository(
     }
 
     override fun unencryptedList(list: MutableState<List<String?>>) {
-        val listRef = storage.reference.child("Unencrypted Files/${auth.uid}")
+        val listRef = storage.reference.child("${auth.uid}/Unencrypted Files")
         listRef.listAll()
             .addOnSuccessListener {
                 list.value = it.items.map { storageReference ->
@@ -114,7 +114,7 @@ actual class CryptoRepository(
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun downloadFile(category: String, fileName: String) {
-        val pathReference = storage.reference.child("${category}/${auth.uid}/${fileName}")
+        val pathReference = storage.reference.child("${auth.uid}/${category}/${fileName}")
         val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", category)
         if (!rootPath.exists()) {
             rootPath.mkdirs()
@@ -142,6 +142,7 @@ actual class CryptoRepository(
 //        val inputBytes = ByteArray(file.length().toInt())
 //        inputStream.read(inputBytes)
 //        val outputBytes = cipher.doFinal(inputBytes)
+//        output.write(outputBytes)
 
         val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Unencrypted Files")
         if (!rootPath.exists()) {
@@ -149,8 +150,6 @@ actual class CryptoRepository(
         }
         val localFile = File(rootPath, file.name)
         val output = FileOutputStream(localFile)
-
-//        output.write(outputBytes)
 
         CipherInputStream(inputStream, cipher).use {
             try {
@@ -163,6 +162,24 @@ actual class CryptoRepository(
         }
         output.close()
         inputStream?.close()
+    }
+
+    override fun createFolder(folderName: String) {
+        val tempFile = File.createTempFile(
+            "PlaceHolder",
+            null,
+//            context.getOutputDirectory() //Environment.getExternalStorageDirectory()
+        )
+
+        val ref = storage.reference.child("${auth.uid}/${"currentPath"}/${folderName}/PlaceHolder")
+
+        val uploadTask = ref.putFile(tempFile.toUri())
+
+        uploadTask.addOnSuccessListener {
+            println("Folder created.")
+        }.addOnFailureListener {
+            println(it.localizedMessage)
+        }
     }
 
     @Composable
@@ -264,7 +281,7 @@ actual class CryptoRepository(
     }
 
     private fun setFileLocation(path: String, uri: Uri) {
-        val ref = storage.reference.child("${path}/${auth.uid}/${getFileNameFromUri(context, uri)}")
+        val ref = storage.reference.child("${auth.uid}/${path}/${getFileNameFromUri(context, uri)}")
         val uploadTask = ref.putFile(uri)
 
         uploadTask.addOnSuccessListener {

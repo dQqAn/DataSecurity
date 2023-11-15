@@ -20,4 +20,6 @@ interface CryptoInterface {
     fun downloadFile(category: String, fileName: String)
 
     fun decrypt(algorithm: String, file: File, key: String)
+
+    fun createFolder(folderName: String)
 }
