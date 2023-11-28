@@ -17,6 +17,12 @@ interface CryptoInterface {
     fun encryptedList(list: MutableState<List<String?>>)
     fun unencryptedList(list: MutableState<List<String?>>)
 
+    fun driveList(
+        list: MutableState<List<String?>>,
+        currentFolder: MutableState<String?>,
+        selectedPath: MutableState<String?>
+    )
+
     fun downloadFile(category: String, fileName: String)
 
     fun decrypt(algorithm: String, file: File, key: String)

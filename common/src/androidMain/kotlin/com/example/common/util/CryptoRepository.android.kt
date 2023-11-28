@@ -4,12 +4,10 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -112,7 +110,35 @@ actual class CryptoRepository(
             }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    override fun driveList(
+        list: MutableState<List<String?>>,
+        currentFolder: MutableState<String?>,
+        selectedPath: MutableState<String?>
+    ) {
+        val listRef = if (selectedPath.value != null)
+            storage.reference.child("${auth.uid}/${selectedPath.value}")
+        else storage.reference.child("${auth.uid}")
+
+        listRef.listAll()
+            .addOnSuccessListener {
+                currentFolder.value = it.prefixes[0].parent?.name
+                val tempList = mutableListOf<String?>()
+                tempList.addAll(
+                    it.prefixes.map { storageReference -> //folders
+                        storageReference.name
+                    })
+
+                tempList.addAll(
+                    it.items.map { storageReference -> //files
+                        storageReference.name
+                    })
+                list.value = tempList.toList()
+            }
+            .addOnFailureListener {
+                println(it.localizedMessage)
+            }
+    }
+
     override fun downloadFile(category: String, fileName: String) {
         val pathReference = storage.reference.child("${auth.uid}/${category}/${fileName}")
         val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", category)
@@ -128,7 +154,6 @@ actual class CryptoRepository(
             }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun decrypt(algorithm: String, file: File, key: String) {
         val cipher = Cipher.getInstance(algorithm)
         val keygen = keyGen(algorithm, key)
