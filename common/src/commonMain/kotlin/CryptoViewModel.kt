@@ -26,11 +26,9 @@ class CryptoViewModel(
     @Composable
     internal fun uploadButton() = repository.uploadButton(algorithm, keyText)
 
-    val encryptedList: MutableState<List<String?>> = mutableStateOf(listOf(null))
-    fun encryptedList() = repository.encryptedList(encryptedList)
+    val folderList: MutableState<List<String?>> = repository.folderList
 
-    val unencryptedList: MutableState<List<String?>> = mutableStateOf(listOf(null))
-    fun unencryptedList() = repository.unencryptedList(unencryptedList)
+    val fileList: MutableState<List<String?>> = repository.fileList
 
     val selectedItem = mutableStateOf(-1)
     internal fun changeSelectedItem(option: Int) {

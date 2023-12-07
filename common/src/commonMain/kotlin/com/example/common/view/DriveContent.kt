@@ -20,8 +20,8 @@ internal fun BoxWithConstraintsScope.driveContent(
     cryptoViewModel: CryptoViewModel,
     onBackClick: () -> Unit
 ) {
-//    cryptoViewModel.encryptedList()
-//    cryptoViewModel.unencryptedList()
+    cryptoViewModel.selectedItemList.value = listOf(null)
+    cryptoViewModel.selectedItemMutableList.value = mutableListOf(null)
     cryptoViewModel.driveList()
     Box(
         modifier = Modifier.fillMaxSize().padding(PaddingValues(20.dp))

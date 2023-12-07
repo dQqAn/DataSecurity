@@ -84,7 +84,11 @@ actual class CryptoRepository(
 
     override val isOpenFileManager: MutableState<Boolean> = mutableStateOf(false)
 
-    override fun encryptedList(list: MutableState<List<String?>>) {
+    override val fileList: MutableState<List<String?>> = mutableStateOf(mutableListOf(null))
+
+    override val folderList: MutableState<List<String?>> = mutableStateOf(mutableListOf(null))
+
+    /*override fun folderList(list: MutableState<List<String?>>) {
         val listRef = storage.reference.child("${auth.uid}/Encrypted Files")
         listRef.listAll()
             .addOnSuccessListener {
@@ -97,7 +101,7 @@ actual class CryptoRepository(
             }
     }
 
-    override fun unencryptedList(list: MutableState<List<String?>>) {
+    override fun fileList(list: MutableState<List<String?>>) {
         val listRef = storage.reference.child("${auth.uid}/Unencrypted Files")
         listRef.listAll()
             .addOnSuccessListener {
@@ -108,13 +112,15 @@ actual class CryptoRepository(
             .addOnFailureListener {
                 println(it.localizedMessage)
             }
-    }
+    }*/
 
     override fun driveList(
         list: MutableState<List<String?>>,
         currentFolder: MutableState<String?>,
         selectedPath: MutableState<String?>
     ) {
+//        list.value = listOf(null)
+
         val listRef = if (selectedPath.value != null)
             storage.reference.child("${auth.uid}/${selectedPath.value}")
         else storage.reference.child("${auth.uid}")
@@ -122,17 +128,26 @@ actual class CryptoRepository(
         listRef.listAll()
             .addOnSuccessListener {
                 currentFolder.value = it.prefixes[0].parent?.name
-                val tempList = mutableListOf<String?>()
-                tempList.addAll(
-                    it.prefixes.map { storageReference -> //folders
-                        storageReference.name
-                    })
 
-                tempList.addAll(
-                    it.items.map { storageReference -> //files
-                        storageReference.name
-                    })
+                val tempList = mutableListOf<String?>()
+
+                var tempFolderList: List<String?> = it.prefixes.map { storageReference -> //folders
+                    storageReference.name
+                }
+                tempList.addAll(tempFolderList)
+                folderList.value = tempFolderList
+
+                var tempFileList: List<String?> = it.items.map { storageReference -> //files
+                    storageReference.name
+                }
+                tempList.addAll(tempFileList)
+                fileList.value = tempFileList
+
                 list.value = tempList.toList()
+
+                tempList.clear()
+                tempFolderList = listOf(null)
+                tempFileList = listOf(null)
             }
             .addOnFailureListener {
                 println(it.localizedMessage)

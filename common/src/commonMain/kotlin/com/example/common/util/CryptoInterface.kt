@@ -14,8 +14,11 @@ interface CryptoInterface {
 
     val isOpenFileManager: MutableState<Boolean>
 
-    fun encryptedList(list: MutableState<List<String?>>)
-    fun unencryptedList(list: MutableState<List<String?>>)
+//    fun folderList(list: MutableState<List<String?>>)
+//    fun fileList(list: MutableState<List<String?>>)
+
+    val folderList: MutableState<List<String?>>
+    val fileList : MutableState<List<String?>>
 
     fun driveList(
         list: MutableState<List<String?>>,
