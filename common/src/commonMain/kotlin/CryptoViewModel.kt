@@ -24,11 +24,13 @@ class CryptoViewModel(
     }
 
     @Composable
-    internal fun uploadButton() = repository.uploadButton(algorithm, keyText)
+    internal fun uploadButton() = repository.uploadButton(algorithm, keyText, selectedPath)
 
-    val folderList: MutableState<List<String?>> = repository.folderList
+    val folderList: MutableState<Map<String?, String?>> = repository.folderList
+//    val folderList: MutableState<List<String?>> = repository.folderList
 
-    val fileList: MutableState<List<String?>> = repository.fileList
+    val fileList: MutableState<Map<String?, String?>> = repository.fileList
+//    val fileList: MutableState<List<String?>> = repository.fileList
 
     val selectedItem = mutableStateOf(-1)
     internal fun changeSelectedItem(option: Int) {
@@ -56,14 +58,44 @@ class CryptoViewModel(
 //            println("B: " + option)
             selectedItemMutableList.value.add(option)
         }
-        selectedItemList.value=selectedItemMutableList.value.toList()
+        selectedItemList.value = selectedItemMutableList.value.toList()
 //        println(selectedItemMutableList.value)
     }
 
-    val currentFolder: MutableState<String?> = mutableStateOf(null)
+    val currentFolder: MutableState<String?> = mutableStateOf("Main")
     val selectedPath: MutableState<String?> = mutableStateOf(null)
+    val selectedPathToMoveFile: MutableState<String?> = mutableStateOf(null)
     val driveList: MutableState<List<String?>> = mutableStateOf(mutableListOf(null))
     fun driveList() = repository.driveList(driveList, currentFolder, selectedPath)
 
-    fun downloadFile(category: String, fileName: String) = repository.downloadFile(category, fileName)
+    //    fun downloadFile(path: String, fileName: String) = repository.downloadFile(path, fileName)
+    //    fun downloadFile(path: String, fileName: String) = repository.downloadFile(path, fileName)
+    fun downloadFile() = repository.downloadFile(selectedItemList.value.toList())
+
+    fun delete() = repository.delete(selectedItemList, selectedItemMutableList, driveList)
+
+    private var _folderText: MutableState<String?> = mutableStateOf("")
+    internal val folderText = _folderText
+    internal fun changeFolderText(name: String) {
+        _folderText.value = name
+    }
+
+    fun createFolder() = repository.createFolder(
+        _folderText.value,
+        currentFolder,
+        selectedPath,
+        selectedItemList,
+        selectedItemMutableList,
+        driveList
+    )
+
+    fun backFolder() = repository.backFolder(currentFolder, selectedPath)
+
+    fun moveFile() = repository.moveFile(
+        currentFolder,
+        selectedPathToMoveFile,
+        driveList,
+        selectedItemList,
+        selectedItemMutableList,
+    )
 }

@@ -20,6 +20,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
 import java.io.File
 import java.io.FileOutputStream
@@ -58,9 +59,13 @@ actual class CryptoRepository(
     private fun checkMultiplePermissions(): Boolean = getMultiplePermissions().allPermissionsGranted
 
     @Composable
-    override fun uploadButton(algorithm: MutableState<String?>, key: MutableState<String?>) {
+    override fun uploadButton(
+        algorithm: MutableState<String?>,
+        key: MutableState<String?>,
+        selectedPath: MutableState<String?>
+    ) {
         if (checkMultiplePermissions()) {
-            fileManagerListeners(algorithm, key)
+            fileManagerListeners(algorithm, key, selectedPath)
 
             Button(
                 onClick = {
@@ -84,9 +89,13 @@ actual class CryptoRepository(
 
     override val isOpenFileManager: MutableState<Boolean> = mutableStateOf(false)
 
-    override val fileList: MutableState<List<String?>> = mutableStateOf(mutableListOf(null))
+    override val fileList: MutableState<Map<String?, String?>> = mutableStateOf(mapOf(null to null))
+//    override val fileList: MutableState<List<String?>> = mutableStateOf(mutableListOf(null))
 
-    override val folderList: MutableState<List<String?>> = mutableStateOf(mutableListOf(null))
+    override val folderList: MutableState<Map<String?, String?>> = mutableStateOf(mapOf(null to null))
+//    override val folderList: MutableState<List<String?>> = mutableStateOf(mutableListOf(null))
+
+    override var driveList: MutableState<List<String?>> = mutableStateOf(listOf(null))
 
     /*override fun folderList(list: MutableState<List<String?>>) {
         val listRef = storage.reference.child("${auth.uid}/Encrypted Files")
@@ -122,51 +131,140 @@ actual class CryptoRepository(
 //        list.value = listOf(null)
 
         val listRef = if (selectedPath.value != null)
-            storage.reference.child("${auth.uid}/${selectedPath.value}")
+//            storage.reference.child("${auth.uid}/${selectedPath.value}")
+            storage.reference.child(selectedPath.value!!)
         else storage.reference.child("${auth.uid}")
 
         listRef.listAll()
             .addOnSuccessListener {
-                currentFolder.value = it.prefixes[0].parent?.name
+//                currentFolder.value = it.prefixes[0].parent?.name
 
                 val tempList = mutableListOf<String?>()
 
-                var tempFolderList: List<String?> = it.prefixes.map { storageReference -> //folders
+                /*var tempFolderList: List<String?> = it.prefixes.map { storageReference -> //folders
                     storageReference.name
                 }
                 tempList.addAll(tempFolderList)
-                folderList.value = tempFolderList
+                folderList.value = tempFolderList*/
 
-                var tempFileList: List<String?> = it.items.map { storageReference -> //files
+                var tempFolderMap: Map<String?, String?> = it.prefixes.associate { storageReference -> //folders
+                    storageReference.name to storageReference.path
+                }
+                tempList.addAll(tempFolderMap.keys)
+//                folderList.value = tempFolderMap.keys.toList()
+                folderList.value = tempFolderMap
+
+                /*var tempFileList: List<String?> = it.items.map { storageReference -> //files
                     storageReference.name
                 }
                 tempList.addAll(tempFileList)
-                fileList.value = tempFileList
+                fileList.value = tempFileList*/
+
+                var tempFileMap: Map<String?, String?> = it.items.associate { storageReference -> //files
+                    storageReference.name to storageReference.path
+                }
+                tempList.addAll(tempFileMap.keys)
+//                fileList.value = tempFileMap.values.toList()
+                fileList.value = tempFileMap
 
                 list.value = tempList.toList()
+                driveList.value = list.value
 
                 tempList.clear()
-                tempFolderList = listOf(null)
-                tempFileList = listOf(null)
+                tempFolderMap = mapOf()
+                tempFileMap = mapOf()
+//                tempFolderList = listOf(null)
+//                tempFileList = listOf(null)
             }
             .addOnFailureListener {
                 println(it.localizedMessage)
             }
     }
 
-    override fun downloadFile(category: String, fileName: String) {
-        val pathReference = storage.reference.child("${auth.uid}/${category}/${fileName}")
-        val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", category)
+    /*override fun downloadFile(path: String, fileName: String) {
+        val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Temp Files")
         if (!rootPath.exists()) {
             rootPath.mkdirs()
         }
         val localFile = File(rootPath, fileName)
+        val pathReference = storage.reference.child(path)
         pathReference.getFile(localFile)
             .addOnSuccessListener {
-                decrypt("AES", localFile, "asd")
+                if (fileList.value[fileName]?.isNotEmpty() == true){
+                    decrypt("AES", localFile, "asd")
+                }
             }.addOnFailureListener {
                 println(it.localizedMessage)
             }
+    }*/
+
+    override fun downloadFile(selectedItemList: List<Int?>) {
+        val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Temp Files")
+        if (!rootPath.exists()) {
+            rootPath.mkdirs()
+        }
+
+//        for(index in selectedItemList[1]!!..selectedItemList.size step 1)
+        selectedItemList.forEach { index ->
+            if (index != null) {
+                val driveRef = driveList.value[index]!!
+                val fileRef = fileList.value[driveRef]!!
+                val localFile = File(rootPath, driveRef)
+                val pathReference = storage.reference.child(fileRef)
+                pathReference.getFile(localFile)
+                    .addOnSuccessListener {
+                        if (fileRef.isNotEmpty()) {
+                            decrypt("AES", localFile, "asd")
+                        }
+                    }.addOnFailureListener {
+                        println(it.localizedMessage)
+                    }
+            }
+        }
+    }
+
+    override fun delete(
+        selectedItemList: MutableState<List<Int?>>,
+        selectedItemMutableList: MutableState<MutableList<Int?>>,
+        driveList: MutableState<List<String?>>
+    ) {
+        selectedItemList.value.forEach { index ->
+            if (index != null) {
+                val fileRef = fileList.value[driveList.value[index]]
+                val folderRef = folderList.value[driveList.value[index]]
+                val pathReference = storage.reference.child(
+                    fileRef ?: (folderRef ?: "!")
+                )
+
+                if (fileRef != null) {
+                    pathReference.delete().addOnSuccessListener {
+                        println("File deleted.")
+                        driveList.value = driveList.value.filterIndexed { i, s ->
+                            s != driveList.value[index]
+                        }
+                        selectedItemMutableList.value.clear()
+                        selectedItemList.value = selectedItemMutableList.value.toList()
+                    }.addOnFailureListener { println(it.localizedMessage) }
+                } else if (folderRef != null) {
+                    deleteSubFiles(pathReference)
+                }
+            }
+        }
+    }
+
+    private fun deleteSubFiles(ref: StorageReference?) {
+        if (ref != null) {
+            ref.listAll().addOnSuccessListener {
+                it.items.forEach { ref2 ->
+                    ref2.delete().addOnSuccessListener {
+                        println("Sub files deleted.")
+                    }.addOnFailureListener { it2 -> println(it2.localizedMessage) }
+                }
+                it.prefixes.forEach { ref2 ->
+                    deleteSubFiles(ref2)
+                }
+            }.addOnFailureListener { println(it.localizedMessage) }
+        }
     }
 
     override fun decrypt(algorithm: String, file: File, key: String) {
@@ -196,43 +294,124 @@ actual class CryptoRepository(
                 it.copyTo(output)
                 println("File decrypted.")
             } catch (e: Exception) {
+                localFile.delete()
                 println(e.localizedMessage)
             }
             it.close()
         }
+//        file.delete()
         output.close()
         inputStream?.close()
     }
 
-    override fun createFolder(folderName: String) {
-        val tempFile = File.createTempFile(
-            "PlaceHolder",
-            null,
+    override fun createFolder(
+        folderName: String?,
+        currentFolder: MutableState<String?>,
+        selectedPath: MutableState<String?>,
+        selectedItemList: MutableState<List<Int?>>,
+        selectedItemMutableList: MutableState<MutableList<Int?>>,
+        driveList: MutableState<List<String?>>
+    ) {
+        if (!folderName.isNullOrEmpty()) {
+            val tempFile = File.createTempFile(
+                "PlaceHolder",
+                null,
 //            context.getOutputDirectory() //Environment.getExternalStorageDirectory()
-        )
+            )
 
-        val ref = storage.reference.child("${auth.uid}/${"currentPath"}/${folderName}/PlaceHolder")
+//        val ref = storage.reference.child("${auth.uid}/${"currentPath"}/${folderName}/PlaceHolder")
+            val ref = storage.reference.child("${selectedPath.value}/${folderName}/PlaceHolder")
 
-        val uploadTask = ref.putFile(tempFile.toUri())
+            val uploadTask = ref.putFile(tempFile.toUri())
 
-        uploadTask.addOnSuccessListener {
-            println("Folder created.")
-        }.addOnFailureListener {
-            println(it.localizedMessage)
+            uploadTask.addOnSuccessListener {
+                println("Folder created.")
+                driveList(driveList, currentFolder, selectedPath)
+                selectedItemMutableList.value.clear()
+                selectedItemList.value = selectedItemMutableList.value.toList()
+            }.addOnFailureListener {
+                println(it.localizedMessage)
+            }
+        }
+    }
+
+    override fun backFolder(
+        currentFolder: MutableState<String?>,
+        selectedPath: MutableState<String?>,
+    ) {
+        if (selectedPath.value?.count { it == '/' } != 1 && currentFolder.value != "Main") {
+            selectedPath.value = selectedPath.value?.substringBeforeLast("/")
+            currentFolder.value = if (selectedPath.value?.count { it == '/' } != 1) {
+                selectedPath.value?.substringAfterLast("/")
+            } else {
+                "Main"
+            }
+        }
+    }
+
+    override fun moveFile(
+        currentFolder: MutableState<String?>,
+        selectedPath: MutableState<String?>,
+        driveList: MutableState<List<String?>>,
+        selectedItemList: MutableState<List<Int?>>,
+        selectedItemMutableList: MutableState<MutableList<Int?>>,
+    ) {
+
+        val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Temp Files")
+        if (!rootPath.exists()) {
+            rootPath.mkdirs()
+        }
+
+        selectedPath.value?.let {path->
+            selectedItemList.value.forEach { index ->
+                if (index != null) {
+                    val driveRef = driveList.value[index]!!
+                    val fileRef = fileList.value[driveRef]!!
+                    val localFile = File(rootPath, driveRef)
+                    val pathReference = storage.reference.child(fileRef)
+                    pathReference.getFile(localFile)
+                        .addOnSuccessListener {
+                            val uri =
+                                FileProvider.getUriForFile(context, context.packageName + ".provider", localFile)
+                            setFileLocation(path, uri)
+                            localFile.delete()
+
+                            pathReference.delete().addOnSuccessListener {
+                                println("File(s) deleted.")
+                                driveList.value = driveList.value.filterIndexed { i, s ->
+                                    s != driveList.value[index]
+                                }
+                                selectedItemMutableList.value.clear()
+                                selectedItemList.value = selectedItemMutableList.value.toList()
+                            }.addOnFailureListener { println(it.localizedMessage) }
+                        }.addOnFailureListener {
+                            println(it.localizedMessage)
+                        }
+                }
+            }
+            selectedPath.value = null
         }
     }
 
     @Composable
-    private fun launchFileManager(algorithm: MutableState<String?>, key: MutableState<String?>) =
+    private fun launchFileManager(
+        algorithm: MutableState<String?>,
+        key: MutableState<String?>,
+        selectedPath: MutableState<String?>
+    ) =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
             isOpenFileManager.value = false
             fileUri = it
-            uploadFile(algorithm, key)
+            uploadFile(algorithm, key, selectedPath)
         }
 
     @Composable
-    private fun fileManagerListeners(algorithm: MutableState<String?>, key: MutableState<String?>) {
-        val getLaunchFileManager = launchFileManager(algorithm, key)
+    private fun fileManagerListeners(
+        algorithm: MutableState<String?>,
+        key: MutableState<String?>,
+        selectedPath: MutableState<String?>
+    ) {
+        val getLaunchFileManager = launchFileManager(algorithm, key, selectedPath)
         LaunchedEffect(isOpenFileManager.value) {
             if (isOpenFileManager.value) {
                 getLaunchFileManager.launch("*/*")
@@ -240,7 +419,11 @@ actual class CryptoRepository(
         }
     }
 
-    override fun uploadFile(algorithm: MutableState<String?>, key: MutableState<String?>) {
+    override fun uploadFile(
+        algorithm: MutableState<String?>,
+        key: MutableState<String?>,
+        selectedPath: MutableState<String?>
+    ) {
         fileUri?.let { it ->
             if (!algorithm.value.isNullOrEmpty() && !key.value.isNullOrEmpty()) {
 
@@ -293,9 +476,17 @@ actual class CryptoRepository(
 
                 val encryptedUri =
                     FileProvider.getUriForFile(context, context.packageName + ".provider", tempFile)
-                setFileLocation("Encrypted Files", encryptedUri)
+                if (selectedPath.value != null) {
+                    setFileLocation(selectedPath.value!!, encryptedUri)
+                } else {
+                    setFileLocation("Encrypted Files", encryptedUri)
+                }
             } else {
-                setFileLocation("Unencrypted Files", it)
+                if (selectedPath.value != null) {
+                    setFileLocation(selectedPath.value!!, it)
+                } else {
+                    setFileLocation("Unencrypted Files", it)
+                }
             }
         }
     }
@@ -321,7 +512,11 @@ actual class CryptoRepository(
     }
 
     private fun setFileLocation(path: String, uri: Uri) {
-        val ref = storage.reference.child("${auth.uid}/${path}/${getFileNameFromUri(context, uri)}")
+        val ref = if (path.count { it == '/' } > 0) {
+            storage.reference.child("${path}/${getFileNameFromUri(context, uri)}")
+        } else {
+            storage.reference.child("${auth.uid}/${path}/${getFileNameFromUri(context, uri)}")
+        }
         val uploadTask = ref.putFile(uri)
 
         uploadTask.addOnSuccessListener {

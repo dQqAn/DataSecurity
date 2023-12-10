@@ -6,9 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ internal fun BoxWithConstraintsScope.driveContent(
     cryptoViewModel: CryptoViewModel,
     onBackClick: () -> Unit
 ) {
+    val maxWidth = maxWidth
     cryptoViewModel.selectedItemList.value = listOf(null)
     cryptoViewModel.selectedItemMutableList.value = mutableListOf(null)
     cryptoViewModel.driveList()
@@ -54,7 +56,10 @@ internal fun BoxWithConstraintsScope.driveContent(
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth().clickable(true) {
-//                            cryptoViewModel.downloadFile("Unencrypted Files", item!!)
+                                cryptoViewModel.folderList.value[item]?.let { ref ->
+                                    cryptoViewModel.selectedPath.value = ref
+                                    cryptoViewModel.currentFolder.value = item
+                                }
                             }
                         ) {
                             CheckBoxes(
@@ -70,30 +75,67 @@ internal fun BoxWithConstraintsScope.driveContent(
 
             Button(
                 onClick = {
-
+                    cryptoViewModel.backFolder()
                 }
             ) { Text("Back Folder") }
 
             Button(
                 onClick = {
+                    cryptoViewModel.downloadFile()
+                }
+            ) { Text("Download File(s)") }
 
+            OutlinedTextField(
+                modifier = Modifier
+                    .width((maxWidth / 100 * 70))
+                    .heightIn(max = 90.dp),
+                value = cryptoViewModel.folderText.value!!,
+                onValueChange = cryptoViewModel::changeFolderText,
+                placeholder = { Text(text = "Folder Name") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Folder,
+                        contentDescription = ""
+                    )
+                },
+                trailingIcon = {
+                    IconButton(onClick = { cryptoViewModel.changeFolderText("") }) {
+                        Icon(imageVector = Icons.Default.Clear, contentDescription = "")
+                    }
+                }
+            )
+
+            Button(
+                onClick = {
+                    cryptoViewModel.createFolder()
                 }
             ) { Text("Create Folder") }
 
             Button(
                 onClick = {
-
+                    cryptoViewModel.delete()
                 }
-            ) { Text("Delete Folder / File") }
+            ) { Text("Delete") }
+
+            Row {
+                Button(
+                    onClick = {
+                        cryptoViewModel.selectedPathToMoveFile.value = cryptoViewModel.selectedPath.value
+                    }
+                ) { Text("Select Folder") }
+                Button(
+                    onClick = {
+                        cryptoViewModel.moveFile()
+                    }
+                ) { Text("Move File(s)") }
+            }
 
             Button(
                 onClick = {
-
+                    onBackClick()
+                    cryptoViewModel.selectedPath.value = null
+                    cryptoViewModel.currentFolder.value = "Main"
                 }
-            ) { Text("Move File") }
-
-            Button(
-                onClick = { onBackClick() }
             ) { Text("Back Page") }
         }
     }

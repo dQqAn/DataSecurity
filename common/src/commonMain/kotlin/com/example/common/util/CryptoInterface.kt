@@ -6,9 +6,13 @@ import java.io.File
 
 interface CryptoInterface {
     @Composable
-    fun uploadButton(algorithm: MutableState<String?>, key: MutableState<String?>)
+    fun uploadButton(
+        algorithm: MutableState<String?>,
+        key: MutableState<String?>,
+        selectedPath: MutableState<String?>
+    )
 
-    fun uploadFile(algorithm: MutableState<String?>, key: MutableState<String?>)
+    fun uploadFile(algorithm: MutableState<String?>, key: MutableState<String?>, selectedPath: MutableState<String?>)
 
     var selectedFile: File?
 
@@ -17,8 +21,13 @@ interface CryptoInterface {
 //    fun folderList(list: MutableState<List<String?>>)
 //    fun fileList(list: MutableState<List<String?>>)
 
-    val folderList: MutableState<List<String?>>
-    val fileList : MutableState<List<String?>>
+//    val folderList: MutableState<List<String?>>
+//    val fileList : MutableState<List<String?>>
+
+    val folderList: MutableState<Map<String?, String?>>
+    val fileList: MutableState<Map<String?, String?>>
+
+    var driveList: MutableState<List<String?>>
 
     fun driveList(
         list: MutableState<List<String?>>,
@@ -26,9 +35,36 @@ interface CryptoInterface {
         selectedPath: MutableState<String?>
     )
 
-    fun downloadFile(category: String, fileName: String)
+    //    fun downloadFile(path: String, fileName: String)
+    fun downloadFile(selectedItemList: List<Int?>)
+
+    fun delete(
+        selectedItemList: MutableState<List<Int?>>,
+        selectedItemMutableList: MutableState<MutableList<Int?>>,
+        driveList: MutableState<List<String?>>
+    )
 
     fun decrypt(algorithm: String, file: File, key: String)
 
-    fun createFolder(folderName: String)
+    fun createFolder(
+        folderName: String?,
+        currentFolder: MutableState<String?>,
+        selectedPath: MutableState<String?>,
+        selectedItemList: MutableState<List<Int?>>,
+        selectedItemMutableList: MutableState<MutableList<Int?>>,
+        driveList: MutableState<List<String?>>
+    )
+
+    fun backFolder(
+        currentFolder: MutableState<String?>,
+        selectedPath: MutableState<String?>,
+    )
+
+    fun moveFile(
+        currentFolder: MutableState<String?>,
+        selectedPath: MutableState<String?>,
+        driveList: MutableState<List<String?>>,
+        selectedItemList: MutableState<List<Int?>>,
+        selectedItemMutableList: MutableState<MutableList<Int?>>,
+    )
 }
