@@ -427,6 +427,8 @@ actual class CryptoRepository(
         fileUri?.let { it ->
             if (!algorithm.value.isNullOrEmpty() && !key.value.isNullOrEmpty()) {
 
+                val fileExtension=it.encodedPath?.substringAfterLast(".")
+
                 //DES
                 /*var charac = key.value!!.toByteArray(Charsets.UTF_8)
                         val md = MessageDigest.getInstance("SHA-1")
@@ -458,7 +460,7 @@ actual class CryptoRepository(
 
                 val tempFile = File(
                     context.getOutputDirectory(), SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
-                        .format(System.currentTimeMillis()) + ".jpeg"
+                        .format(System.currentTimeMillis()) + "." + fileExtension
                 )
                 /*val tempFile = File.createTempFile(
                     SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US).toString(), ".jpeg",
