@@ -76,7 +76,7 @@ internal fun BoxWithConstraintsScope.cryptoContent(
 }
 
 @Composable
-private fun CheckBoxGroup(
+fun CheckBoxGroup(
     selectedOption: Int,
     onOptionSelected: (Int) -> Unit,
     changeAlgorithm: (String?) -> Unit

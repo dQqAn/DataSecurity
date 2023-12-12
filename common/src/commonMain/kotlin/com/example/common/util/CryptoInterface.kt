@@ -36,7 +36,7 @@ interface CryptoInterface {
     )
 
     //    fun downloadFile(path: String, fileName: String)
-    fun downloadFile(selectedItemList: List<Int?>)
+    fun downloadFile(selectedItemList: List<Int?>, decryptAlgorithm: MutableState<String?>)
 
     fun delete(
         selectedItemList: MutableState<List<Int?>>,

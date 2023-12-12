@@ -198,27 +198,37 @@ actual class CryptoRepository(
             }
     }*/
 
-    override fun downloadFile(selectedItemList: List<Int?>) {
-        val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Temp Files")
-        if (!rootPath.exists()) {
-            rootPath.mkdirs()
-        }
+    override fun downloadFile(selectedItemList: List<Int?>, decryptAlgorithm: MutableState<String?>) {
+        decryptAlgorithm.value?.let { decAlgo ->
+            val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Temp Files")
+            if (!rootPath.exists()) {
+                rootPath.mkdirs()
+            }
 
 //        for(index in selectedItemList[1]!!..selectedItemList.size step 1)
-        selectedItemList.forEach { index ->
-            if (index != null) {
-                val driveRef = driveList.value[index]!!
-                val fileRef = fileList.value[driveRef]!!
-                val localFile = File(rootPath, driveRef)
-                val pathReference = storage.reference.child(fileRef)
-                pathReference.getFile(localFile)
-                    .addOnSuccessListener {
-                        if (fileRef.isNotEmpty()) {
-                            decrypt("AES", localFile, "asd")
+            selectedItemList.forEach { index ->
+                if (index != null) {
+                    val driveRef = driveList.value[index]!!
+                    val fileRef = fileList.value[driveRef]!!
+                    val localFile = File(rootPath, driveRef)
+                    val pathReference = storage.reference.child(fileRef)
+                    pathReference.getFile(localFile)
+                        .addOnSuccessListener {
+                            if (fileRef.isNotEmpty()) {
+                                val textFile = File(rootPath, "key.txt")
+                                val lines = textFile.readLines()
+                                for (line in lines) {
+                                    val fileName = line.substringBefore(" & ").substringAfter("Name= ")
+                                    if (fileName == localFile.name) {
+                                        val key = line.substringAfter("Key= ")
+                                        decrypt(decAlgo, localFile, key)
+                                    }
+                                }
+                            }
+                        }.addOnFailureListener {
+                            println(it.localizedMessage)
                         }
-                    }.addOnFailureListener {
-                        println(it.localizedMessage)
-                    }
+                }
             }
         }
     }
@@ -362,7 +372,7 @@ actual class CryptoRepository(
             rootPath.mkdirs()
         }
 
-        selectedPath.value?.let {path->
+        selectedPath.value?.let { path ->
             selectedItemList.value.forEach { index ->
                 if (index != null) {
                     val driveRef = driveList.value[index]!!
@@ -427,7 +437,7 @@ actual class CryptoRepository(
         fileUri?.let { it ->
             if (!algorithm.value.isNullOrEmpty() && !key.value.isNullOrEmpty()) {
 
-                val fileExtension=it.encodedPath?.substringAfterLast(".")
+                val fileExtension = it.encodedPath?.substringAfterLast(".")
 
                 //DES
                 /*var charac = key.value!!.toByteArray(Charsets.UTF_8)
@@ -483,6 +493,13 @@ actual class CryptoRepository(
                 } else {
                     setFileLocation("Encrypted Files", encryptedUri)
                 }
+
+                val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Temp Files")
+                if (!rootPath.exists()) {
+                    rootPath.mkdirs()
+                }
+                val textFile = File(rootPath, "key.txt")
+                textFile.appendText("Name= " + tempFile.name + " & " + "Key= " + key.value!! + "\n\r")
             } else {
                 if (selectedPath.value != null) {
                     setFileLocation(selectedPath.value!!, it)

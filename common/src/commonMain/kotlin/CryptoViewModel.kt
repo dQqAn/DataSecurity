@@ -37,6 +37,16 @@ class CryptoViewModel(
         selectedItem.value = option
     }
 
+    internal val decryptSelectedOption = mutableStateOf(-1)
+    internal fun changeDecryptSelectedOption(option: Int) {
+        decryptSelectedOption.value = option
+    }
+
+    private val decryptAlgorithm: MutableState<String?> = mutableStateOf(null)
+    internal fun changeDecryptAlgorithm(method: String?) {
+        decryptAlgorithm.value = method
+    }
+
     val selectedItemMutableList: MutableState<MutableList<Int?>> = mutableStateOf(mutableListOf(null))
     val selectedItemList: MutableState<List<Int?>> = mutableStateOf(selectedItemMutableList.value.toList())
     internal fun addItemToList(option: Int) {
@@ -70,7 +80,7 @@ class CryptoViewModel(
 
     //    fun downloadFile(path: String, fileName: String) = repository.downloadFile(path, fileName)
     //    fun downloadFile(path: String, fileName: String) = repository.downloadFile(path, fileName)
-    fun downloadFile() = repository.downloadFile(selectedItemList.value.toList())
+    fun downloadFile() = repository.downloadFile(selectedItemList.value.toList(), decryptAlgorithm)
 
     fun delete() = repository.delete(selectedItemList, selectedItemMutableList, driveList)
 
