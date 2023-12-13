@@ -9,10 +9,16 @@ interface CryptoInterface {
     fun uploadButton(
         algorithm: MutableState<String?>,
         key: MutableState<String?>,
-        selectedPath: MutableState<String?>
+        selectedPath: MutableState<String?>,
+        localTextFileKey: MutableState<String?>,
     )
 
-    fun uploadFile(algorithm: MutableState<String?>, key: MutableState<String?>, selectedPath: MutableState<String?>)
+    fun uploadFile(
+        algorithm: MutableState<String?>,
+        key: MutableState<String?>,
+        selectedPath: MutableState<String?>,
+        localTextFileKey: MutableState<String?>,
+    )
 
     var selectedFile: File?
 
@@ -36,7 +42,11 @@ interface CryptoInterface {
     )
 
     //    fun downloadFile(path: String, fileName: String)
-    fun downloadFile(selectedItemList: List<Int?>, decryptAlgorithm: MutableState<String?>)
+    fun downloadFile(
+        selectedItemList: List<Int?>,
+        decryptAlgorithm: MutableState<String?>,
+        localTextFileKey: MutableState<String?>,
+    )
 
     fun delete(
         selectedItemList: MutableState<List<Int?>>,
@@ -44,7 +54,9 @@ interface CryptoInterface {
         driveList: MutableState<List<String?>>
     )
 
-    fun decrypt(algorithm: String, file: File, key: String)
+    fun encrypt(fileUri: String, algorithm: MutableState<String?>, key: MutableState<String?>): File
+
+    fun decrypt(algorithm: String, file: File, key: String): File?
 
     fun createFolder(
         folderName: String?,

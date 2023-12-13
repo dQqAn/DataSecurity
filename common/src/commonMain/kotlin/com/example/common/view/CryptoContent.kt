@@ -57,6 +57,27 @@ internal fun BoxWithConstraintsScope.cryptoContent(
             }
         )
 
+        OutlinedTextField(
+            modifier = Modifier
+                .width((maxWidth / 100 * 70))
+                .heightIn(max = 90.dp),
+            value = cryptoViewModel.localKeyText.value!!,
+            onValueChange = cryptoViewModel::changeLocalKeyText,
+            placeholder = { Text(text = "Local Key File's Password") },
+            enabled = cryptoViewModel.selectedOption.value > -1,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Key,
+                    contentDescription = ""
+                )
+            },
+            trailingIcon = {
+                IconButton(onClick = { cryptoViewModel.changeLocalKeyText("") }) {
+                    Icon(imageVector = Icons.Default.Clear, contentDescription = "")
+                }
+            }
+        )
+
         cryptoViewModel.uploadButton()
 
         Button(

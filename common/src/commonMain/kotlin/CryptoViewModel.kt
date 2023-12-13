@@ -13,6 +13,12 @@ class CryptoViewModel(
         _keyText.value = key
     }
 
+    private var _localKeyText: MutableState<String?> = mutableStateOf("")
+    internal val localKeyText = _localKeyText
+    internal fun changeLocalKeyText(key: String) {
+        _localKeyText.value = key
+    }
+
     internal val selectedOption = mutableStateOf(-1)
     internal fun changeSelectedOption(option: Int) {
         selectedOption.value = option
@@ -24,7 +30,7 @@ class CryptoViewModel(
     }
 
     @Composable
-    internal fun uploadButton() = repository.uploadButton(algorithm, keyText, selectedPath)
+    internal fun uploadButton() = repository.uploadButton(algorithm, keyText, selectedPath, localKeyText)
 
     val folderList: MutableState<Map<String?, String?>> = repository.folderList
 //    val folderList: MutableState<List<String?>> = repository.folderList
@@ -80,7 +86,7 @@ class CryptoViewModel(
 
     //    fun downloadFile(path: String, fileName: String) = repository.downloadFile(path, fileName)
     //    fun downloadFile(path: String, fileName: String) = repository.downloadFile(path, fileName)
-    fun downloadFile() = repository.downloadFile(selectedItemList.value.toList(), decryptAlgorithm)
+    fun downloadFile() = repository.downloadFile(selectedItemList.value.toList(), decryptAlgorithm, localKeyText)
 
     fun delete() = repository.delete(selectedItemList, selectedItemMutableList, driveList)
 

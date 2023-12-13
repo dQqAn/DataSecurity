@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -113,6 +114,28 @@ internal fun BoxWithConstraintsScope.driveContent(
                     },
                     trailingIcon = {
                         IconButton(onClick = { cryptoViewModel.changeFolderText("") }) {
+                            Icon(imageVector = Icons.Default.Clear, contentDescription = "")
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    modifier = Modifier
+                        .width((maxWidth / 100 * 70))
+                        .heightIn(max = 90.dp),
+                    value = cryptoViewModel.localKeyText.value!!,
+                    onValueChange = cryptoViewModel::changeLocalKeyText,
+                    placeholder = { Text(text = "Key") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Key,
+                            contentDescription = ""
+                        )
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { cryptoViewModel.changeLocalKeyText("") }) {
                             Icon(imageVector = Icons.Default.Clear, contentDescription = "")
                         }
                     }
