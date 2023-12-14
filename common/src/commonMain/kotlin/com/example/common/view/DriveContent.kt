@@ -6,8 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Folder
@@ -43,7 +41,8 @@ internal fun BoxWithConstraintsScope.driveContent(
 //                verticalArrangement = Arrangement.Center,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                stickyHeader {
+                item {
+//                    stickyHeader {}
                     Text("Current Folder:")
                     Text(cryptoViewModel.currentFolder.value.toString())
                     Divider(
@@ -74,105 +73,101 @@ internal fun BoxWithConstraintsScope.driveContent(
                         }
                     }
                 }
-            }
 
-            Column(
-                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Button(
-                    onClick = {
-                        cryptoViewModel.backFolder()
-                    }
-                ) { Text("Back Folder") }
-
-                Button(
-                    onClick = {
-                        cryptoViewModel.downloadFile()
-                    }
-                ) { Text("Download File(s)") }
-
-                CheckBoxGroup(
-                    cryptoViewModel.decryptSelectedOption.value,
-                    cryptoViewModel::changeDecryptSelectedOption,
-                    cryptoViewModel::changeDecryptAlgorithm
-                )
-
-                OutlinedTextField(
-                    modifier = Modifier
-                        .width((maxWidth / 100 * 70))
-                        .heightIn(max = 90.dp),
-                    value = cryptoViewModel.folderText.value!!,
-                    onValueChange = cryptoViewModel::changeFolderText,
-                    placeholder = { Text(text = "Folder Name") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Folder,
-                            contentDescription = ""
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { cryptoViewModel.changeFolderText("") }) {
-                            Icon(imageVector = Icons.Default.Clear, contentDescription = "")
-                        }
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    modifier = Modifier
-                        .width((maxWidth / 100 * 70))
-                        .heightIn(max = 90.dp),
-                    value = cryptoViewModel.localKeyText.value!!,
-                    onValueChange = cryptoViewModel::changeLocalKeyText,
-                    placeholder = { Text(text = "Key") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Key,
-                            contentDescription = ""
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { cryptoViewModel.changeLocalKeyText("") }) {
-                            Icon(imageVector = Icons.Default.Clear, contentDescription = "")
-                        }
-                    }
-                )
-
-                Button(
-                    onClick = {
-                        cryptoViewModel.createFolder()
-                    }
-                ) { Text("Create Folder") }
-
-                Button(
-                    onClick = {
-                        cryptoViewModel.delete()
-                    }
-                ) { Text("Delete") }
-
-                Row {
+                item {
                     Button(
                         onClick = {
-                            cryptoViewModel.selectedPathToMoveFile.value = cryptoViewModel.selectedPath.value
+                            cryptoViewModel.backFolder()
                         }
-                    ) { Text("Select Folder") }
+                    ) { Text("Back Folder") }
+
                     Button(
                         onClick = {
-                            cryptoViewModel.moveFile()
+                            cryptoViewModel.downloadFile()
                         }
-                    ) { Text("Move File(s)") }
+                    ) { Text("Download File(s)") }
+
+                    CheckBoxGroup(
+                        cryptoViewModel.decryptSelectedOption.value,
+                        cryptoViewModel::changeDecryptSelectedOption,
+                        cryptoViewModel::changeDecryptAlgorithm
+                    )
+
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .width((maxWidth / 100 * 70))
+                            .heightIn(max = 90.dp),
+                        value = cryptoViewModel.folderText.value!!,
+                        onValueChange = cryptoViewModel::changeFolderText,
+                        placeholder = { Text(text = "Folder Name") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Folder,
+                                contentDescription = ""
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { cryptoViewModel.changeFolderText("") }) {
+                                Icon(imageVector = Icons.Default.Clear, contentDescription = "")
+                            }
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .width((maxWidth / 100 * 70))
+                            .heightIn(max = 90.dp),
+                        value = cryptoViewModel.localKeyText.value!!,
+                        onValueChange = cryptoViewModel::changeLocalKeyText,
+                        placeholder = { Text(text = "Key") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Key,
+                                contentDescription = ""
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { cryptoViewModel.changeLocalKeyText("") }) {
+                                Icon(imageVector = Icons.Default.Clear, contentDescription = "")
+                            }
+                        }
+                    )
+
+                    Button(
+                        onClick = {
+                            cryptoViewModel.createFolder()
+                        }
+                    ) { Text("Create Folder") }
+
+                    Button(
+                        onClick = {
+                            cryptoViewModel.delete()
+                        }
+                    ) { Text("Delete") }
+
+                    Row {
+                        Button(
+                            onClick = {
+                                cryptoViewModel.selectedPathToMoveFile.value = cryptoViewModel.selectedPath.value
+                            }
+                        ) { Text("Select Folder") }
+                        Button(
+                            onClick = {
+                                cryptoViewModel.moveFile()
+                            }
+                        ) { Text("Move File(s)") }
+                    }
+
+                    Button(
+                        onClick = {
+                            onBackClick()
+                            cryptoViewModel.selectedPath.value = null
+                            cryptoViewModel.currentFolder.value = "Main"
+                        }
+                    ) { Text("Back Page") }
                 }
-
-                Button(
-                    onClick = {
-                        onBackClick()
-                        cryptoViewModel.selectedPath.value = null
-                        cryptoViewModel.currentFolder.value = "Main"
-                    }
-                ) { Text("Back Page") }
             }
         }
     }
