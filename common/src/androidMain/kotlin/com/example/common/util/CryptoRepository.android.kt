@@ -799,27 +799,20 @@ actual class CryptoRepository(
     }
 
     private fun setFileLocation(path: String, uri: Uri) {
-        if (path.count { it == '/' } > 0) {
-            val tempFolderMap = hashMapOf<String, Any>(
-                "folderName" to path,
-                "folderPath" to "${"Users"}/${path}",
-                "userID" to auth.uid.toString()
-            )
-            database.getReference("${"Users"}/${path}").updateChildren(tempFolderMap)
+        val checkedPath = if (path.count { it == '/' } > 0) {
+            "${"Users"}/${path}"
         } else {
-            val tempFolderMap = hashMapOf<String, Any>(
-                "folderName" to path,
-                "folderPath" to "${"Users"}/${auth.uid}/${path}",
-                "userID" to auth.uid.toString()
-            )
-            database.getReference("${"Users"}/${auth.uid}/${path}").updateChildren(tempFolderMap)
+            "${"Users"}/${auth.uid}/${path}"
         }
 
-        val databaseRef = if (path.count { it == '/' } > 0) {
-            database.getReference("${"Users"}/${path}").push()
-        } else {
-            database.getReference("${"Users"}/${auth.uid}/${path}").push()
-        }
+        val tempFolderMap = hashMapOf<String, Any>(
+            "folderName" to path,
+            "folderPath" to checkedPath,
+            "userID" to auth.uid.toString()
+        )
+        database.getReference(checkedPath).updateChildren(tempFolderMap)
+
+        val databaseRef = database.getReference(checkedPath).push()
 
         /*val folderMap=hashMapOf(
             "folderName" to path.substringAfterLast("/"),
@@ -837,7 +830,7 @@ actual class CryptoRepository(
 
                 val map = hashMapOf(
                     "fileName" to getFileNameFromUri(context, uri),
-                    "filePath" to path,
+                    "filePath" to checkedPath,
                     "storagePath" to it.storage.path,
                     "userID" to auth.uid,
                     "parentKey" to key
