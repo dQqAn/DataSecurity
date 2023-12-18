@@ -368,7 +368,7 @@ actual class CryptoRepository(
                             storage.reference.child(path).delete().addOnSuccessListener {
                                 println("File deleted.")
                                 driveList.value = driveList.value.filterIndexed { i, s ->
-                                    s != driveList.value[index]
+                                    index != i
                                 }
                                 selectedItemMutableList.value.clear()
                                 selectedItemList.value = selectedItemMutableList.value.toList()
@@ -379,7 +379,7 @@ actual class CryptoRepository(
                     database.getReference(folderRef!!).removeValue().addOnSuccessListener {
                         println("Folder reference deleted.")
                         driveList.value = driveList.value.filterIndexed { i, s ->
-                            s != driveList.value[index]
+                            index != i
                         }
                         selectedItemMutableList.value.clear()
                         selectedItemList.value = selectedItemMutableList.value.toList()
@@ -664,7 +664,7 @@ actual class CryptoRepository(
                                         databaseRef.setValue(newMap).addOnSuccessListener {
                                             pathReference.removeValue().addOnSuccessListener {
                                                 driveList.value = driveList.value.filterIndexed { i, s ->
-                                                    s != driveList.value[index]
+                                                    index != i
                                                 }
                                                 selectedItemMutableList.value.clear()
                                                 selectedItemList.value = selectedItemMutableList.value.toList()
@@ -693,7 +693,7 @@ actual class CryptoRepository(
                             pathReference.delete().addOnSuccessListener {
                                 println("File(s) deleted.")
                                 driveList.value = driveList.value.filterIndexed { i, s ->
-                                    s != driveList.value[index]
+                                    index != i
                                 }
                                 selectedItemMutableList.value.clear()
                                 selectedItemList.value = selectedItemMutableList.value.toList()
