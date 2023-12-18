@@ -155,7 +155,7 @@ internal fun BoxWithConstraintsScope.driveContent(
                         ) { Text("Select Folder") }
                         Button(
                             onClick = {
-                                cryptoViewModel.moveFile()
+                                cryptoViewModel.moveItem()
                             }
                         ) { Text("Move File(s)") }
                     }

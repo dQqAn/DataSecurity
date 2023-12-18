@@ -72,7 +72,7 @@ interface CryptoInterface {
         selectedPath: MutableState<String?>,
     )
 
-    fun moveFile(
+    fun moveItem(
         currentFolder: MutableState<String?>,
         selectedPath: MutableState<String?>,
         driveList: MutableState<List<String?>>,

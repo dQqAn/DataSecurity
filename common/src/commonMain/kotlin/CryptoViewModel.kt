@@ -107,7 +107,7 @@ class CryptoViewModel(
 
     fun backFolder() = repository.backFolder(currentFolder, selectedPath)
 
-    fun moveFile() = repository.moveFile(
+    fun moveItem() = repository.moveItem(
         currentFolder,
         selectedPathToMoveFile,
         driveList,

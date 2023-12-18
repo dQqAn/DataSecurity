@@ -19,6 +19,10 @@ import androidx.core.net.toUri
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
@@ -42,6 +46,8 @@ actual class CryptoRepository(
 ) : CryptoInterface {
 
     private val storage = Firebase.storage
+
+    private val database = Firebase.database
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
@@ -106,20 +112,116 @@ actual class CryptoRepository(
 
         val listRef = if (selectedPath.value != null)
 //            storage.reference.child("${auth.uid}/${selectedPath.value}")
-            storage.reference.child(selectedPath.value!!)
-        else storage.reference.child("${auth.uid}")
+            database.reference.child(selectedPath.value!!)
+//        else database.reference.child("${auth.uid}")
+        else database.getReference("Users").child(auth.uid!!)
 
-        listRef.listAll()
+        listRef.addListenerForSingleValueEvent(
+            object : ValueEventListener {
+                @SuppressLint("RestrictedApi")
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+                        val tempList = mutableListOf<String?>()
+                        var tempFileMap: MutableMap<String?, String?> = mutableMapOf<String?, String?>()
+                        var tempFolderMap: MutableMap<String?, String?> = mutableMapOf<String?, String?>()
+
+                        val map = snapshot.value as? HashMap<*, *>
+//                        val items = map.values
+
+                        map?.forEach {
+//                            println(it.key)
+//                            println(it.value)
+
+                            val itemCheck = it.value as? HashMap<*, *>
+                            if (itemCheck?.get("storagePath") == null) { //foler check
+                                if (itemCheck?.get("folderPath") != null && itemCheck["folderName"] != null && itemCheck["userID"] != null) { //create folder check
+                                    tempList.add(it.key.toString())
+                                    tempFolderMap[it.key.toString()] = listRef.path.toString() + "/" + it.key.toString()
+                                    folderList.value = tempFolderMap
+                                }
+                            } else { // file check
+                                tempList.add(itemCheck["fileName"].toString())
+//                                tempFileMap[itemCheck["fileName"].toString()] = itemCheck["filePath"].toString() + "/" + itemCheck["parentKey"].toString()
+                                tempFileMap[itemCheck["fileName"].toString()] =
+                                    listRef.path.toString() + "/" + it.key.toString()
+                                tempFileMap["StoragePath=" + itemCheck["fileName"].toString()] =
+                                    itemCheck["storagePath"].toString()
+//                                println(tempFileMap)
+//                                println(itemCheck["fileName"].toString())
+//                                println(listRef.path.toString() + "/" + it.key.toString())
+//                                println(itemCheck.get("storagePath"))
+                                fileList.value = tempFileMap
+                            }
+                        }
+
+                        /*map.keys.forEach { key ->//folder
+                            tempFolderMap = mapOf(
+                                key.toString() to database.reference.path.toString()
+                            )
+                            tempList.add(key.toString())
+                            folderList.value = tempFolderMap
+                        }*/
+
+//                        println(map)
+//                        println(map.entries)
+//                        println(map.values)
+
+                        /*items.forEach {//file
+                            val item = it as? HashMap<*, *>
+
+                            item?.values?.forEach { file ->
+                                val files = file as HashMap<*, *>
+
+                                if (files["storagePath"] != null) {
+                                    tempFileMap = mapOf(
+                                        files["fileName"].toString() to files["filePath"].toString()
+                                    )
+                                    tempList.addAll(tempFileMap.keys)
+                                    fileList.value = tempFileMap
+                                }
+                            }
+
+                            *//*if (item["storagePath"] != null) { //file
+                                tempFileMap = mapOf(
+                                    item["fileName"].toString() to item["filePath"].toString()
+                                )
+                                tempList.addAll(tempFileMap.keys)
+                                fileList.value = tempFileMap
+                            }*//**//* else { //folder
+                                tempFolderMap = mapOf(
+                                    item["folderName"].toString() to item["folderPath"].toString()
+                                )
+                                tempList.addAll(tempFolderMap.keys)
+                                folderList.value = tempFolderMap
+                            }*//*
+                        }*/
+
+                        list.value = tempList.toList()
+                        driveList.value = list.value
+
+                        tempList.clear()
+                        tempFolderMap = mutableMapOf()
+                        tempFileMap = mutableMapOf()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    println(error.message)
+                }
+            }
+        )
+
+        /*listRef.listAll()
             .addOnSuccessListener {
 //                currentFolder.value = it.prefixes[0].parent?.name
 
                 val tempList = mutableListOf<String?>()
 
-                /*var tempFolderList: List<String?> = it.prefixes.map { storageReference -> //folders
-                    storageReference.name
-                }
-                tempList.addAll(tempFolderList)
-                folderList.value = tempFolderList*/
+//                var tempFolderList: List<String?> = it.prefixes.map { storageReference -> //folders
+//                    storageReference.name
+//                }
+//                tempList.addAll(tempFolderList)
+//                folderList.value = tempFolderList
 
                 var tempFolderMap: Map<String?, String?> = it.prefixes.associate { storageReference -> //folders
                     storageReference.name to storageReference.path
@@ -128,11 +230,11 @@ actual class CryptoRepository(
 //                folderList.value = tempFolderMap.keys.toList()
                 folderList.value = tempFolderMap
 
-                /*var tempFileList: List<String?> = it.items.map { storageReference -> //files
-                    storageReference.name
-                }
-                tempList.addAll(tempFileList)
-                fileList.value = tempFileList*/
+//                var tempFileList: List<String?> = it.items.map { storageReference -> //files
+//                    storageReference.name
+//                }
+//                tempList.addAll(tempFileList)
+//                fileList.value = tempFileList
 
                 var tempFileMap: Map<String?, String?> = it.items.associate { storageReference -> //files
                     storageReference.name to storageReference.path
@@ -152,7 +254,7 @@ actual class CryptoRepository(
             }
             .addOnFailureListener {
                 println(it.localizedMessage)
-            }
+            }*/
     }
 
     override fun downloadFile(
@@ -160,41 +262,83 @@ actual class CryptoRepository(
         decryptAlgorithm: MutableState<String?>,
         localTextFileKey: MutableState<String?>,
     ) {
-        decryptAlgorithm.value?.let { decAlgo ->
-            val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Encrypted Files")
-            if (!rootPath.exists()) {
-                rootPath.mkdirs()
-            }
+        //        for(index in selectedItemList[1]!!..selectedItemList.size step 1)
+        selectedItemList.forEach { index ->
+            if (index != null) {
+                val driveRef = driveList.value[index]!!
+                val fileRef = fileList.value[driveRef]!!
+//
+//                println(fileRef)
+//                println(driveRef)
+                database.getReference(fileRef).addValueEventListener(
+                    object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            if (snapshot.exists()) {
+                                val map = snapshot.value as? Map<*, *>
+//                                    println(map?.get("storagePath").toString())
+                                if (map?.get("storagePath").toString().contains("Unencrypted Files")) {
+                                    val rootPath = File(
+                                        "${Environment.getExternalStorageDirectory().path}/Download",
+                                        "Unencrypted Files"
+                                    )
+                                    if (!rootPath.exists()) {
+                                        rootPath.mkdirs()
+                                    }
 
-//        for(index in selectedItemList[1]!!..selectedItemList.size step 1)
-            selectedItemList.forEach { index ->
-                if (index != null) {
-                    val driveRef = driveList.value[index]!!
-                    val fileRef = fileList.value[driveRef]!!
-                    val localFile = File(rootPath, driveRef)
-                    val pathReference = storage.reference.child(fileRef)
-                    pathReference.getFile(localFile)
-                        .addOnSuccessListener {
-                            val textFile = File(rootPath, "key.txt")
-                            if (fileRef.isNotEmpty() && localTextFileKey.value != null && textFile.exists()) {
-                                val tempFile = decrypt("RC4", textFile, localTextFileKey.value!!)
-                                val lines = tempFile?.readLines()
-                                tempFile?.delete()
-                                lines?.let { list ->
-//                                    println(lines)
-                                    for (line in list) {
-                                        val fileName = line.substringBefore(" & ").substringAfter("Name= ")
-                                        if (fileName == localFile.name) {
-                                            val key = line.substringAfter("Key= ")
-                                            decrypt(decAlgo, localFile, key)
+                                    val localFile = File(rootPath, driveRef)
+                                    val pathReference = storage.reference.child(map?.get("storagePath").toString())
+
+                                    pathReference.getFile(localFile)
+                                        .addOnSuccessListener {
+                                            println("File downloaded.")
+                                        }.addOnFailureListener {
+                                            println(it.localizedMessage)
                                         }
+                                } else {
+                                    decryptAlgorithm.value?.let { decAlgo ->
+                                        val rootPath = File(
+                                            "${Environment.getExternalStorageDirectory().path}/Download",
+                                            "Encrypted Files"
+                                        )
+                                        if (!rootPath.exists()) {
+                                            rootPath.mkdirs()
+                                        }
+
+                                        val localFile = File(rootPath, driveRef)
+                                        val pathReference = storage.reference.child(map?.get("storagePath").toString())
+
+                                        pathReference.getFile(localFile)
+                                            .addOnSuccessListener {
+                                                val textFile = File(rootPath, "key.txt")
+                                                if (fileRef.isNotEmpty() && localTextFileKey.value != null && textFile.exists()) {
+                                                    val tempFile = decrypt("RC4", textFile, localTextFileKey.value!!)
+                                                    val lines = tempFile?.readLines()
+                                                    tempFile?.delete()
+                                                    lines?.let { list ->
+//                                    println(lines)
+                                                        for (line in list) {
+                                                            val fileName =
+                                                                line.substringBefore(" & ").substringAfter("Name= ")
+                                                            if (fileName == localFile.name) {
+                                                                val key = line.substringAfter("Key= ")
+                                                                decrypt(decAlgo, localFile, key)
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }.addOnFailureListener {
+                                                println(it.localizedMessage)
+                                            }
                                     }
                                 }
                             }
-                        }.addOnFailureListener {
-                            println(it.localizedMessage)
                         }
-                }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            println(error.message)
+                        }
+                    }
+                )
             }
         }
     }
@@ -208,21 +352,39 @@ actual class CryptoRepository(
             if (index != null) {
                 val fileRef = fileList.value[driveList.value[index]]
                 val folderRef = folderList.value[driveList.value[index]]
-                val pathReference = storage.reference.child(
+
+                /*val pathReference = storage.reference.child(
                     fileRef ?: (folderRef ?: "!")
-                )
+                )*/
 
                 if (fileRef != null) {
-                    pathReference.delete().addOnSuccessListener {
-                        println("File deleted.")
+//                    println(fileRef)
+//                    println(fileList.value.containsKey("StoragePath=" + driveList.value[index]))
+
+                    database.getReference(fileRef).removeValue().addOnSuccessListener {
+                        println("File reference deleted.")
+                        val pathReference = fileList.value["StoragePath=" + driveList.value[index]]
+                        pathReference?.let { path ->
+                            storage.reference.child(path).delete().addOnSuccessListener {
+                                println("File deleted.")
+                                driveList.value = driveList.value.filterIndexed { i, s ->
+                                    s != driveList.value[index]
+                                }
+                                selectedItemMutableList.value.clear()
+                                selectedItemList.value = selectedItemMutableList.value.toList()
+                            }.addOnFailureListener { println(it.localizedMessage) }
+                        }
+                    }.addOnFailureListener { println(it.localizedMessage) }
+                } else {
+                    database.getReference(folderRef!!).removeValue().addOnSuccessListener {
+                        println("Folder reference deleted.")
                         driveList.value = driveList.value.filterIndexed { i, s ->
                             s != driveList.value[index]
                         }
                         selectedItemMutableList.value.clear()
                         selectedItemList.value = selectedItemMutableList.value.toList()
+//                        deleteSubFiles()
                     }.addOnFailureListener { println(it.localizedMessage) }
-                } else if (folderRef != null) {
-                    deleteSubFiles(pathReference)
                 }
             }
         }
@@ -391,7 +553,29 @@ actual class CryptoRepository(
         driveList: MutableState<List<String?>>
     ) {
         if (!folderName.isNullOrEmpty()) {
-            val tempFile = File.createTempFile(
+
+            selectedPath.value = if (selectedPath.value == null) {
+                "/Users/${auth.uid}"
+            } else selectedPath.value
+
+            val path = selectedPath.value!!
+
+            val databaseRef = database.getReference("${path}/${folderName}")
+
+            val map = hashMapOf(
+                "folderName" to folderName,
+                "folderPath" to path,
+                "userID" to auth.uid
+            )
+
+            databaseRef.setValue(map).addOnSuccessListener {
+                println("Folder created.")
+                driveList(driveList, currentFolder, selectedPath)
+                selectedItemMutableList.value.clear()
+                selectedItemList.value = selectedItemMutableList.value.toList()
+            }.addOnFailureListener { println(it.localizedMessage) }
+
+            /*val tempFile = File.createTempFile(
                 "PlaceHolder",
                 null,
 //            context.getOutputDirectory() //Environment.getExternalStorageDirectory()
@@ -409,7 +593,9 @@ actual class CryptoRepository(
                 selectedItemList.value = selectedItemMutableList.value.toList()
             }.addOnFailureListener {
                 println(it.localizedMessage)
-            }
+            }*/
+        } else {
+            println("Entries are empty.")
         }
     }
 
@@ -419,15 +605,16 @@ actual class CryptoRepository(
     ) {
         if (selectedPath.value?.count { it == '/' } != 1 && currentFolder.value != "Main") {
             selectedPath.value = selectedPath.value?.substringBeforeLast("/")
-            currentFolder.value = if (selectedPath.value?.count { it == '/' } != 1) {
-                selectedPath.value?.substringAfterLast("/")
-            } else {
-                "Main"
-            }
+            currentFolder.value =
+                if (selectedPath.value?.count { it == '/' } != 1 && selectedPath.value?.substringAfterLast("/") != auth.uid) {
+                    selectedPath.value?.substringAfterLast("/")
+                } else {
+                    "Main"
+                }
         }
     }
 
-    override fun moveFile(
+    override fun moveItem(
         currentFolder: MutableState<String?>,
         selectedPath: MutableState<String?>,
         driveList: MutableState<List<String?>>,
@@ -435,17 +622,66 @@ actual class CryptoRepository(
         selectedItemMutableList: MutableState<MutableList<Int?>>,
     ) {
 
-        val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Temp Files")
+        /*val rootPath = File("${Environment.getExternalStorageDirectory().path}/Download", "Temp Files")
         if (!rootPath.exists()) {
             rootPath.mkdirs()
-        }
+        }*/
+
+        selectedPath.value = if (selectedPath.value == null) {
+            "/Users/${auth.uid}"
+        } else selectedPath.value
+
+//        println(selectedPath.value)
 
         selectedPath.value?.let { path ->
             selectedItemList.value.forEach { index ->
                 if (index != null) {
-                    val driveRef = driveList.value[index]!!
-                    val fileRef = fileList.value[driveRef]!!
-                    val localFile = File(rootPath, driveRef)
+                    val driveRef = driveList.value[index]
+                    val fileRef = fileList.value[driveRef]
+                    val folderRef = folderList.value[driveRef]
+
+                    val pathReference = database.reference.child(
+                        fileRef ?: (folderRef ?: "!")
+                    )
+
+                    pathReference.addListenerForSingleValueEvent(
+                        object : ValueEventListener {
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                if (snapshot.exists()) {
+
+                                    val databaseRef = database.getReference(path).push()
+                                    databaseRef.key?.let {
+
+                                        val map = snapshot.value as HashMap<*, *>
+                                        val newMap = hashMapOf(
+                                            "fileName" to map["fileName"],
+                                            "filePath" to path,
+                                            "storagePath" to map["storagePath"],
+                                            "userID" to auth.uid,
+                                            "parentKey" to it
+                                        )
+
+                                        databaseRef.setValue(newMap).addOnSuccessListener {
+                                            pathReference.removeValue().addOnSuccessListener {
+                                                driveList.value = driveList.value.filterIndexed { i, s ->
+                                                    s != driveList.value[index]
+                                                }
+                                                selectedItemMutableList.value.clear()
+                                                selectedItemList.value = selectedItemMutableList.value.toList()
+                                                println("Item moved.")
+                                            }.addOnFailureListener { println(it.message) }
+                                        }.addOnFailureListener { println(it.message) }
+                                    }
+                                }
+                            }
+
+                            override fun onCancelled(error: DatabaseError) {
+                                println(error.message)
+                            }
+                        }
+                    )
+
+                    /*val localFile = File(rootPath, driveRef)
                     val pathReference = storage.reference.child(fileRef)
                     pathReference.getFile(localFile)
                         .addOnSuccessListener {
@@ -464,7 +700,7 @@ actual class CryptoRepository(
                             }.addOnFailureListener { println(it.localizedMessage) }
                         }.addOnFailureListener {
                             println(it.localizedMessage)
-                        }
+                        }*/
                 }
             }
             selectedPath.value = null
@@ -563,18 +799,59 @@ actual class CryptoRepository(
     }
 
     private fun setFileLocation(path: String, uri: Uri) {
-        val ref = if (path.count { it == '/' } > 0) {
-            storage.reference.child("${path}/${getFileNameFromUri(context, uri)}")
+        if (path.count { it == '/' } > 0) {
+            val tempFolderMap = hashMapOf<String, Any>(
+                "folderName" to path,
+                "folderPath" to "${"Users"}/${path}",
+                "userID" to auth.uid.toString()
+            )
+            database.getReference("${"Users"}/${path}").updateChildren(tempFolderMap)
         } else {
-            storage.reference.child("${auth.uid}/${path}/${getFileNameFromUri(context, uri)}")
+            val tempFolderMap = hashMapOf<String, Any>(
+                "folderName" to path,
+                "folderPath" to "${"Users"}/${auth.uid}/${path}",
+                "userID" to auth.uid.toString()
+            )
+            database.getReference("${"Users"}/${auth.uid}/${path}").updateChildren(tempFolderMap)
         }
-        val uploadTask = ref.putFile(uri)
 
-        uploadTask.addOnSuccessListener {
-            println("File uploaded.")
-            fileUri = null
-        }.addOnFailureListener {
-            println(it.localizedMessage)
+        val databaseRef = if (path.count { it == '/' } > 0) {
+            database.getReference("${"Users"}/${path}").push()
+        } else {
+            database.getReference("${"Users"}/${auth.uid}/${path}").push()
+        }
+
+        /*val folderMap=hashMapOf(
+            "folderName" to path.substringAfterLast("/"),
+            "folderPath" to "/"+auth.uid+"/"+path,
+            "userID" to auth.uid,
+        )
+        database.getReference("${"Users"}/${auth.uid}/${path}").setValue(folderMap)*/
+
+        databaseRef.key?.let { key ->
+            val storageRef = storage.reference.child("${auth.uid}/${path}/${getFileNameFromUri(context, uri)}")
+            val storageUploadTask = storageRef.putFile(uri)
+            storageUploadTask.addOnSuccessListener {
+                println("File uploaded.")
+                fileUri = null
+
+                val map = hashMapOf(
+                    "fileName" to getFileNameFromUri(context, uri),
+                    "filePath" to path,
+                    "storagePath" to it.storage.path,
+                    "userID" to auth.uid,
+                    "parentKey" to key
+                )
+                val uploadTask = databaseRef.setValue(map)
+
+                uploadTask.addOnSuccessListener {
+                    println("Data uploaded.")
+                }.addOnFailureListener {
+                    println(it.localizedMessage)
+                }
+            }.addOnFailureListener {
+                println(it.localizedMessage)
+            }
         }
     }
 
