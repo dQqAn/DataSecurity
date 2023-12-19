@@ -160,6 +160,19 @@ internal fun BoxWithConstraintsScope.driveContent(
                         ) { Text("Move File(s)") }
                     }
 
+                    Row {
+                        Button(
+                            onClick = {
+                                cryptoViewModel.showFilteredList("Encrypted Files")
+                            }
+                        ) { Text("Encrypted Files") }
+                        Button(
+                            onClick = {
+                                cryptoViewModel.showFilteredList("Unencrypted Files")
+                            }
+                        ) { Text("Unencrypted Files") }
+                    }
+
                     Button(
                         onClick = {
                             onBackClick()

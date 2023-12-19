@@ -468,6 +468,62 @@ actual class CryptoRepository(
         return tempFile
     }
 
+    override fun getUserID(): String = auth.uid.toString()
+
+    override fun showSelectedList(
+        list: MutableState<List<String?>>,
+        ref: String,
+        filter: String,
+        tempList: MutableList<String?>,
+        tempFileMap: MutableMap<String?, String?>
+    ) {
+        val databaseReference = database.getReference(ref)
+        databaseReference.addValueEventListener(
+            object : ValueEventListener {
+                @SuppressLint("RestrictedApi")
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+
+                        val map = snapshot.value as? HashMap<*, *>
+                        map?.forEach {//file
+                            val itemCheck = it.value as? HashMap<*, *>
+                            if (itemCheck?.get("storagePath") != null && itemCheck["storagePath"].toString()
+                                    .contains(filter)
+                            ) {
+                                tempList.add(itemCheck["fileName"].toString())
+                                tempFileMap[itemCheck["fileName"].toString()] =
+                                    databaseReference.path.toString() + "/" + it.key.toString()
+                                tempFileMap["StoragePath=" + itemCheck["fileName"].toString()] =
+                                    itemCheck["storagePath"].toString()
+                                fileList.value = tempFileMap
+                            }
+                        }
+
+                        list.value = tempList.toList()
+                        driveList.value = list.value
+
+                        map?.forEach {//folder
+                            val itemCheck = it.value as? HashMap<*, *>
+                            if (itemCheck?.get("folderPath") != null) {
+                                showSelectedList(
+                                    list,
+                                    itemCheck["folderPath"].toString(),
+                                    filter,
+                                    tempList,
+                                    tempFileMap
+                                )
+                            }
+                        }
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    println(error.message)
+                }
+            }
+        )
+    }
+
     private fun deleteSubFiles(ref: StorageReference?) {
         if (ref != null) {
             ref.listAll().addOnSuccessListener {
@@ -564,7 +620,7 @@ actual class CryptoRepository(
 
             val map = hashMapOf(
                 "folderName" to folderName,
-                "folderPath" to path,
+                "folderPath" to "${path}/${folderName}",
                 "userID" to auth.uid
             )
 

@@ -114,4 +114,14 @@ class CryptoViewModel(
         selectedItemList,
         selectedItemMutableList,
     )
+
+    private fun getUserID(): String = repository.getUserID()
+    private val tempList = mutableListOf<String?>()
+    private var tempFileMap: MutableMap<String?, String?> = mutableMapOf()
+    fun showFilteredList(filter: String) {
+        driveList.value = listOf()
+        tempList.clear()
+        tempFileMap = mutableMapOf()
+        repository.showSelectedList(driveList, "Users/${getUserID()}", filter, tempList, tempFileMap)
+    }
 }

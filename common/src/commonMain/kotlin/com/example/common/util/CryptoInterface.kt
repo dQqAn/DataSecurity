@@ -79,4 +79,14 @@ interface CryptoInterface {
         selectedItemList: MutableState<List<Int?>>,
         selectedItemMutableList: MutableState<MutableList<Int?>>,
     )
+
+    fun showSelectedList(
+        list: MutableState<List<String?>>,
+        ref: String,
+        filter: String,
+        tempList: MutableList<String?>,
+        tempFileMap: MutableMap<String?, String?>
+    )
+
+    fun getUserID(): String
 }
