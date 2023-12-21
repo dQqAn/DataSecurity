@@ -4,10 +4,12 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import javax.crypto.spec.SecretKeySpec
 
 
 @OptIn(ExperimentalPermissionsApi::class)
+@RequiresApi(Build.VERSION_CODES.O)
 actual class CryptoRepository(
     private val context: Context
 ) : CryptoInterface {
@@ -850,6 +853,12 @@ actual class CryptoRepository(
             val factory = SecretKeyFactory.getInstance("DES")
             lastKey = factory.generateSecret(DESKeySpec(bytes)).encoded
         }
+
+        /*// create new key
+        val secretKey = SecretKeySpec(lastKey, algorithm)
+        // get base64 encoded version of the key
+        val encodedKey = Base64.getEncoder().encodeToString(secretKey.encoded)
+        println("$algorithm and Key: $encodedKey")*/
 
         return SecretKeySpec(lastKey, algorithm)
     }
