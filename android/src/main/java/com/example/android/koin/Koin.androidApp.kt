@@ -18,7 +18,7 @@ class AndroidApp : Application() {
                 }
 
                 single<CryptoInterface> {
-                    CryptoRepository()
+                    CryptoRepository(context = get())
                 }
             }
         )
